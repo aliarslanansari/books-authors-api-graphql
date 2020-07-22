@@ -1,6 +1,7 @@
 const express = require('express');
 const expressGraphQL = require('express-graphql');
 const { graphqlHTTP } = expressGraphQL;
+
 const {
     GraphQLSchema,
     GraphQLObjectType,
@@ -29,6 +30,20 @@ const books = [
     { id:8, name:'Dhanu Potter 8', authorID:2},
 ]
 
+const AuthorType = new GraphQLObjectType({
+    name:'Author',
+    description:'This represents aa Author',
+    fields:()=>({
+        id:{type:GraphQLNonNull(GraphQLInt)},
+        name:{type:GraphQLNonNull(GraphQLString)},
+        books:{type:GraphQLList(BookType),
+            resolve:(author)=>{
+                return books.filter(book=> book.authorID === author.id)
+            }
+        }
+    })
+})
+
 const BookType = new GraphQLObjectType({
     name:'Book',
     description:'This represents a book written by an Author',
@@ -36,6 +51,12 @@ const BookType = new GraphQLObjectType({
         id:{type:GraphQLNonNull(GraphQLInt)},
         name:{type:GraphQLNonNull(GraphQLString)},
         authorID:{type:GraphQLNonNull(GraphQLString)},
+        author:{
+            type:AuthorType,
+            resolve: (book) =>{
+                return authors.find(author => author.id === book.authorID)
+            }
+        }
     })
 })
 
@@ -47,6 +68,11 @@ const RootQueryType = new GraphQLObjectType({
             type: new GraphQLList(BookType),
             description:'List of Books',
             resolve:()=> books
+        },
+        authors:{
+            type: new GraphQLList(AuthorType),
+            description:'List of Authors',
+            resolve:()=> authors
         }
     })
 })
